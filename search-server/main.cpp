@@ -75,7 +75,7 @@ public:
         return stop_words_.size();
     }
 
-    void AddDocument(int &document_id, const string &document)
+    void AddDocument(int document_id, const string &document)
     {
         ++document_count_;
         const vector<string> words = SplitIntoWordsNoStop(document);
