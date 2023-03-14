@@ -79,11 +79,10 @@ public:
     {
         ++document_count_;
         const vector<string> words = SplitIntoWordsNoStop(document);
-        int k;
-        double tf = 0;
+        double tf = 1.0 / words.size();
         for (const string s : words)
         {
-            word_to_documents_freqs_[s][document_id] += count(words.begin(), words.end(), s) / static_cast<double>(words.size());
+            word_to_documents_freqs_[s][document_id] += tf;
         }
     }
 
@@ -210,3 +209,11 @@ int main()
     }
      system("pause");
 }
+/*
+is are was a an in the with near at
+3
+a colorful parrot with green wings and red tail is lost
+a grey hound with black ears is found at the railway station
+a white cat with long furry tail is found near the red square
+white cat long tail
+*/
