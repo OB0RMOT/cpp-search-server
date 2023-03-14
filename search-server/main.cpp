@@ -75,17 +75,15 @@ public:
         return stop_words_.size();
     }
 
-    void AddDocument(int document_id, const string &document)
+    void AddDocument(int &document_id, const string &document)
     {
+        ++document_count_;
         const vector<string> words = SplitIntoWordsNoStop(document);
         int k;
-        double tf = 0.0;
+        double tf = 0;
         for (const string s : words)
         {
-            k = count(words.begin(), words.end(), s);
-            tf = k / static_cast<double>(words.size());
-            // cout << tf << " ";
-            word_to_documents_freqs_[s].insert({document_id, tf});
+            word_to_documents_freqs_[s][document_id] += count(words.begin(), words.end(), s) / static_cast<double>(words.size());
         }
     }
 
@@ -114,11 +112,12 @@ public:
         return matched_documents;
     }
 
-    int document_count_ = 0;
+    
     // Содержимое раздела private: доступно только внутри методов самого класса
 private:
     map<string, map<int, double>> word_to_documents_freqs_;
     set<string> stop_words_;
+    int document_count_ = 0;
 
     vector<string> SplitIntoWordsNoStop(const string &text) const
     {
@@ -133,16 +132,15 @@ private:
         return words;
     }
 
-    vector<Document> FindAllDocuments(const Query query) const
+    vector<Document> FindAllDocuments(const Query &query) const
     {
         map<int, double> document_to_relevance;
         double idf;
         for (const string &q_word : query.query_words)
         {
-            int count = word_to_documents_freqs_.at(q_word).size();
-            idf = log(document_count_ / static_cast<double>(count));
             if (word_to_documents_freqs_.count(q_word) != 0)
             {
+                idf = log(document_count_ / static_cast<double>(word_to_documents_freqs_.at(q_word).size()));
                 for (pair<int, double> doc : word_to_documents_freqs_.at(q_word))
                 {
                     document_to_relevance[doc.first] += static_cast<double>(doc.second * idf);
@@ -191,7 +189,6 @@ SearchServer CreateSearchServer()
     SearchServer search_server;
     search_server.SetStopWords(ReadLine());
     int count = ReadLineWithNumber();
-    search_server.document_count_ = count;
     for (int i = 0; i < count; ++i)
     {
         search_server.AddDocument(i, ReadLine());
@@ -211,5 +208,5 @@ int main()
         cout << "{ document_id = "s << document_id << ", relevance = "s << relevance << " }"s
              << endl;
     }
-    // system("pause");
+     system("pause");
 }
