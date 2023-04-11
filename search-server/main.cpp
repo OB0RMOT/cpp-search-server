@@ -117,29 +117,10 @@ public:
         return matched_documents;
     }
 
-    vector<Document> FindTopDocuments(const string &raw_query, DocumentStatus status = DocumentStatus::ACTUAL) const
+    vector<Document> FindTopDocuments(const string &raw_query, DocumentStatus sstatus = DocumentStatus::ACTUAL) const
     {
-        switch (status)
-        {
-        case DocumentStatus::ACTUAL:
-            return FindTopDocuments(raw_query, [](auto, auto status, auto)
-                                    { return status == DocumentStatus::ACTUAL; });
-
-        case DocumentStatus::BANNED:
-            return FindTopDocuments(raw_query, [](auto, auto status, auto)
-                                    { return status == DocumentStatus::BANNED; });
-
-        case DocumentStatus::IRRELEVANT:
-            return FindTopDocuments(raw_query, [](auto, auto status, auto)
-                                    { return status == DocumentStatus::IRRELEVANT; });
-
-        case DocumentStatus::REMOVED:
-            return FindTopDocuments(raw_query, [](auto, auto status, auto)
-                                    { return status == DocumentStatus::REMOVED; });
-
-        default:
-            return {};
-        }
+        return FindTopDocuments(raw_query, [&](auto document_id, auto status, auto)
+                                { return documents_.at(document_id).status == sstatus; });
     }
 
     int GetDocumentCount() const
@@ -286,7 +267,7 @@ private:
             const double inverse_document_freq = ComputeWordInverseDocumentFreq(word);
             for (const auto [document_id, term_freq] : word_to_document_freqs_.at(word))
             {
-                if (key_mapper(document_id, documents_.at(document_id).status, documents_.at(document_id).rating) == true)
+                if (key_mapper(document_id, documents_.at(document_id).status, documents_.at(document_id).rating))
                 {
                     document_to_relevance[document_id] += term_freq * inverse_document_freq;
                 }
