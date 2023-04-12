@@ -119,7 +119,8 @@ public:
 
     vector<Document> FindTopDocuments(const string &raw_query, DocumentStatus sstatus = DocumentStatus::ACTUAL) const
     {
-        return FindTopDocuments(raw_query, [&](auto document_id, auto status, auto)
+        
+        return FindTopDocuments(raw_query, [&](auto document_id, auto, auto)
                                 { return documents_.at(document_id).status == sstatus; });
     }
 
@@ -319,9 +320,8 @@ int main()
     {
         PrintDocument(document);
     }
-    cout << "ACTUAL:"s << endl;
-    for (const Document &document : search_server.FindTopDocuments("пушистый ухоженный кот"s, [](int document_id, DocumentStatus status, int rating)
-                                                                   { return status == DocumentStatus::ACTUAL; }))
+    cout << "BANNED:"s << endl;
+    for (const Document &document : search_server.FindTopDocuments("пушистый ухоженный кот"s, DocumentStatus::BANNED))
     {
         PrintDocument(document);
     }
@@ -331,5 +331,6 @@ int main()
     {
         PrintDocument(document);
     }
+    system ("pause");
     return 0;
 }
