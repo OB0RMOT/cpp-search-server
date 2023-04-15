@@ -117,11 +117,16 @@ public:
         return matched_documents;
     }
 
+    /*vector<Document> FindTopDocuments(const string &raw_query, DocumentStatus lambda_status = DocumentStatus::ACTUAL) const
+    {
+        return FindTopDocuments(raw_query, [&](auto &document_id, auto &lambda_status, auto)
+                                { return documents_.at(document_id).status == lambda_status; });
+    }*/
+
     vector<Document> FindTopDocuments(const string &raw_query, DocumentStatus sstatus = DocumentStatus::ACTUAL) const
     {
-        
-        return FindTopDocuments(raw_query, [&](auto document_id, auto, auto)
-                                { return documents_.at(document_id).status == sstatus; });
+        return FindTopDocuments(raw_query, [&](int, DocumentStatus status, int)
+                                { return status == sstatus; });
     }
 
     int GetDocumentCount() const
@@ -320,8 +325,9 @@ int main()
     {
         PrintDocument(document);
     }
-    cout << "BANNED:"s << endl;
-    for (const Document &document : search_server.FindTopDocuments("пушистый ухоженный кот"s, DocumentStatus::BANNED))
+    cout << "ACTUAL:"s << endl;
+    for (const Document &document : search_server.FindTopDocuments("пушистый ухоженный кот"s, [](int document_id, DocumentStatus status, int rating)
+                                                                   { return status == DocumentStatus::ACTUAL; }))
     {
         PrintDocument(document);
     }
@@ -331,6 +337,5 @@ int main()
     {
         PrintDocument(document);
     }
-    system ("pause");
     return 0;
 }
