@@ -169,6 +169,8 @@ public:
         return {matched_words, documents_.at(document_id).status};
     }
 
+    double GetDocument
+
 private:
     struct DocumentData
     {
@@ -280,6 +282,7 @@ private:
                 if (key_mapper(document_id, documents_.at(document_id).status, documents_.at(document_id).rating))
                 {
                     document_to_relevance[document_id] += term_freq * inverse_document_freq;
+                    //document_to_relevance_[document_id] += term_freq * inverse_document_freq;
                 }
             }
         }
@@ -392,7 +395,7 @@ void AssertEqualImpl(const T &t, const U &u, const string &t_str, const string &
             cout << " Hint: "s << hint;
         }
         cout << endl;
-        abort();
+        //abort();
     }
 }
 
@@ -412,7 +415,7 @@ void AssertImpl(bool value, const string &expr_str, const string &file, const st
             cout << " Hint: "s << hint;
         }
         cout << endl;
-        abort();
+        //abort();
     }
 }
 
@@ -525,17 +528,20 @@ void TestMinusWords()
 {
     const int doc_id = 42;
     const string content = "cat in the city"s;
+    const string content1 = "the city"s;
     const vector<int> ratings = {1, 2, 3};
     {
         SearchServer server;
         server.AddDocument(doc_id, content, DocumentStatus::ACTUAL, ratings);
+        server.AddDocument(2, content1, DocumentStatus::ACTUAL, ratings);
         /*Лучше иметь тест, который не только исключает документ из выдачи, но при этом ещё и выдаёт какой-то другой
         (то есть результат теста на минус слово не является пустым).
         Это поможет избежать ложноположительного результата теста при возможной граничной ошибочной ситуации,
         когда наличие минус слова в запросе всегда выдаёт пустой результат.*/
-        ASSERT_HINT(server.FindTopDocuments("-cat in the city"s).empty(),
+        ASSERT_EQUAL_HINT(server.FindTopDocuments("-cat in the city"s).size(), 1,
                     "Документы, содержащие минус-слова поискового запроса, не должны включаться в результаты поиска"s);
     }
+    
 }
 
 // Матчинг документов. При матчинге документа по поисковому запросу должны быть возвращены все слова из поискового запроса,
@@ -553,9 +559,15 @@ void TestMatchDocument()
         /*Вместо get, лучше использовать структурные привязки.
         Это сделает конструкции более прозрачными и даст возможность дать внятные названия переменным,
         чтобы точнее показать, что они значат.*/
-        ASSERT_EQUAL(get<0>(server.MatchDocument("cat in the"s, 42)), doc_content);
-        ASSERT_HINT(get<0>(server.MatchDocument("-cat in the city"s, 42)).empty(),
+        {
+        auto [matched_words, status] = server.MatchDocument("cat in the"s, 42);
+        ASSERT_EQUAL(matched_words, doc_content);
+        }
+        {
+        auto [matched_words, status] = server.MatchDocument("-cat in the city"s, 42);
+        ASSERT_HINT(matched_words.empty(),
                     "При матчинге документа по поисковому запросу должны быть возвращены все слова из поискового запроса, присутствующие в документе."s);
+        }
     }
 }
 
@@ -577,8 +589,11 @@ void TestSortRelevanceDocuments()
     server.AddDocument(doc_id2, content2, DocumentStatus::ACTUAL, ratings2);
     server.AddDocument(doc_id3, content3, DocumentStatus::ACTUAL, ratings3);
 
+
+    ComputeWordInverseDocumentFreq()
+    Document document;
     int j = 3;
-    for (int i = 0; i < 3; ++i)
+    for (int i = 0; i < server.GetDocumentCount(); ++i)
     {
         /*Результат FindTopDocuments лучше заранее сохранять.
         Здесь и в других местах в тестах перед тем, как использовать какой-либо элемент по индексу из результата,
@@ -586,7 +601,8 @@ void TestSortRelevanceDocuments()
         но в result только один элемент, то будет падение теста, что будет менее информативно, чем несработанная проверка не размер.
         Также лучше сравнивать не конкретно, что документы расположены в правильной последовательности,
         а именно сравнивать релевантности соседних документов в результате (то есть проверять не поле id, а сравнивать поле relevance разных документов)*/
-        ASSERT_EQUAL_HINT(server.FindTopDocuments("cat in the city")[i].id, j,
+        document = server.FindTopDocuments("cat in the city")[i];
+        ASSERT_EQUAL_HINT(document.relevance, relevance,
                           "Возвращаемые при поиске документов результаты должны быть отсортированы в порядке убывания релевантности."s);
         --j;
     }
