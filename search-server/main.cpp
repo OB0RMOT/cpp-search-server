@@ -169,8 +169,6 @@ public:
         return {matched_words, documents_.at(document_id).status};
     }
 
-    double GetDocument
-
 private:
     struct DocumentData
     {
@@ -561,7 +559,8 @@ void TestMatchDocument()
         чтобы точнее показать, что они значат.*/
         {
         auto [matched_words, status] = server.MatchDocument("cat in the"s, 42);
-        ASSERT_EQUAL(matched_words, doc_content);
+        ASSERT_EQUAL_HINT(matched_words, doc_content,
+                          "При матчинге документа по поисковому запросу должны быть возвращены все слова из поискового запроса, присутствующие в документе."s);
         }
         {
         auto [matched_words, status] = server.MatchDocument("-cat in the city"s, 42);
@@ -574,7 +573,9 @@ void TestMatchDocument()
 // Сортировка найденных документов по релевантности.
 // Возвращаемые при поиске документов результаты должны быть отсортированы в порядке убывания релевантности.
 void TestSortRelevanceDocuments()
-{
+{   // Специально создаю и добавляю документы по возрастанию релевантонсти,
+    // поэтому, после сортировки по убыванию можно будет быть увереным, что документы будут располагаться зеркально,
+    // а значит можно просто сравнить их по id.
     const int doc_id1 = 1;
     const string content1 = "cat"s;
     const vector<int> ratings1 = {1, 2, 3};
@@ -590,9 +591,9 @@ void TestSortRelevanceDocuments()
     server.AddDocument(doc_id3, content3, DocumentStatus::ACTUAL, ratings3);
 
 
-    ComputeWordInverseDocumentFreq()
-    Document document;
-    int j = 3;
+    int id = doc_id3;
+    vector<Document> documents;
+    documents = server.FindTopDocuments("cat in the city");
     for (int i = 0; i < server.GetDocumentCount(); ++i)
     {
         /*Результат FindTopDocuments лучше заранее сохранять.
@@ -601,10 +602,13 @@ void TestSortRelevanceDocuments()
         но в result только один элемент, то будет падение теста, что будет менее информативно, чем несработанная проверка не размер.
         Также лучше сравнивать не конкретно, что документы расположены в правильной последовательности,
         а именно сравнивать релевантности соседних документов в результате (то есть проверять не поле id, а сравнивать поле relevance разных документов)*/
-        document = server.FindTopDocuments("cat in the city")[i];
-        ASSERT_EQUAL_HINT(document.relevance, relevance,
+        
+
+        // Я оставил сравнение по id, ведь для сравнения по релевантности надо будет ее считать и функция раздуется.
+        // Для понимания, почему происходит сравнение по id, сверху я оставил комментарий.
+        ASSERT_EQUAL_HINT(documents[i].id, id,
                           "Возвращаемые при поиске документов результаты должны быть отсортированы в порядке убывания релевантности."s);
-        --j;
+        --id;
     }
 }
 
@@ -619,7 +623,7 @@ void TestDocumentRating()
         server.AddDocument(doc_id, content, DocumentStatus::ACTUAL, ratings);
         //Лучше использовать числовые формулы вида (1 + 2 + 3) / 3 вместо точных значений.
         //Таким образом мы покажем каким образом были на самом деле получены данные значения, что облегчит понимание теста для читателя.
-        ASSERT_EQUAL_HINT(server.FindTopDocuments("cat"s)[0].rating, 2,
+        ASSERT_EQUAL_HINT(server.FindTopDocuments("cat"s)[0].rating, (1 + 2 + 3) / 3,
                           "Рейтинг добавленного документа равен среднему арифметическому оценок документа."s);
     }
 }
@@ -676,7 +680,11 @@ void TestRelevance()
     то точные значения будут иметь мало смысла для понимания, что именно пошло не так (будет просто видно, что числа различаются),
     тогда как числовые формулы покажут, как автор теста вычислял эти значения, что поможет разобраться, где вычисления отличаются.
     Также лучше использовать формулу вида abs(a - b) < EPSILON, где EPSILON - точность сравнения, для сравнения на равенство двух вещественных чисел a и b.*/
-    ASSERT_EQUAL_HINT(round(server.FindTopDocuments("cat in the sity"s)[0].relevance * 1000000) / 1000000, 0.346574, "Некорректное вычисление релевантности найденных документов."s);
+
+    double relevance1 = log(server.GetDocumentCount() * 1.0 / 2) * (1.0 / 2); // расчеты относительно слова cat
+    double relevance2 = log(server.GetDocumentCount() * 1.0 / 1) * (1.0 / 2); // расчеты относительно слова in
+    double relevance = relevance1 + relevance2;
+    ASSERT_HINT(abs(server.FindTopDocuments("cat in the sity"s)[0].relevance - relevance) < 1e-6, "Некорректное вычисление релевантности найденных документов."s);
 }
 
 template <typename Func>
