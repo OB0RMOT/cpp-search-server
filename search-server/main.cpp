@@ -526,17 +526,18 @@ void TestMinusWords()
 {
     const int doc_id = 42;
     const string content = "cat in the city"s;
+    const int doc_id2 = 3;
     const string content1 = "the city"s;
     const vector<int> ratings = {1, 2, 3};
     {
         SearchServer server;
         server.AddDocument(doc_id, content, DocumentStatus::ACTUAL, ratings);
-        server.AddDocument(2, content1, DocumentStatus::ACTUAL, ratings);
+        server.AddDocument(doc_id2, content1, DocumentStatus::ACTUAL, ratings);
         /*Лучше иметь тест, который не только исключает документ из выдачи, но при этом ещё и выдаёт какой-то другой
         (то есть результат теста на минус слово не является пустым).
         Это поможет избежать ложноположительного результата теста при возможной граничной ошибочной ситуации,
         когда наличие минус слова в запросе всегда выдаёт пустой результат.*/
-        ASSERT_EQUAL_HINT(server.FindTopDocuments("-cat in the city"s).size(), 1,
+        ASSERT_EQUAL_HINT(server.FindTopDocuments("-cat in the city"s).at(0).id, doc_id2,
                           "Документы, содержащие минус-слова поискового запроса, не должны включаться в результаты поиска"s);
     }
 }
@@ -589,10 +590,9 @@ void TestSortRelevanceDocuments()
     server.AddDocument(doc_id2, content2, DocumentStatus::ACTUAL, ratings2);
     server.AddDocument(doc_id3, content3, DocumentStatus::ACTUAL, ratings3);
 
-    int id = doc_id3;
     vector<Document> documents;
     documents = server.FindTopDocuments("cat in the city");
-    for (int i = 0; i < server.GetDocumentCount(); ++i)
+    for (int i = 0; i < (server.GetDocumentCount() - 1); ++i)
     {
         /*Результат FindTopDocuments лучше заранее сохранять.
         Здесь и в других местах в тестах перед тем, как использовать какой-либо элемент по индексу из результата,
@@ -603,9 +603,9 @@ void TestSortRelevanceDocuments()
 
         // Я оставил сравнение по id, ведь для сравнения по релевантности надо будет ее считать и функция раздуется.
         // Для понимания, почему происходит сравнение по id, сверху я оставил комментарий.
-        ASSERT_EQUAL_HINT(documents[i].id, id,
-                          "Возвращаемые при поиске документов результаты должны быть отсортированы в порядке убывания релевантности."s);
-        --id;
+
+        ASSERT_HINT(documents[i].relevance > documents[i + 1].relevance,
+                    "Возвращаемые при поиске документов результаты должны быть отсортированы в порядке убывания релевантности."s);
     }
 }
 
