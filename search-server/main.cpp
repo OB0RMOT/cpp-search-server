@@ -10,6 +10,7 @@
 
 using namespace std;
 
+const double EPSILON = 1e-6;
 const int MAX_RESULT_DOCUMENT_COUNT = 5;
 
 string ReadLine()
@@ -99,12 +100,13 @@ public:
     explicit SearchServer(const StringContainer &stop_words)
         : stop_words_(MakeUniqueNonEmptyStrings(stop_words))
     {
-        for (const string &word : stop_words_)
+        if (all_of(stop_words_.begin(), stop_words_.end(), [](const string &word)
+                   { return IsValidWord(word); }))
         {
-            if (IsValidWord(word) == false)
-            {
-                throw invalid_argument(""s);
-            }
+        }
+        else
+        {
+            throw invalid_argument("В слове присутствуют спец символы"s);
         }
     }
 
@@ -112,18 +114,16 @@ public:
         : SearchServer(
               SplitIntoWords(stop_words_text)) // Invoke delegating constructor from string container
     {
-        for (const string &word : stop_words_)
-        {
-            if (IsValidWord(word) == false)
-            {
-                throw invalid_argument(""s);
-            }
-        }
     }
 
     int GetDocumentId(int index) const
     {
-        return document_id_.at(index);
+        map<int, int> document_id;
+        for (const auto &elem : document_id_)
+        {
+            document_id.insert({elem.second, elem.first});
+        }
+        return document_id.at(index);
     }
 
     void AddDocument(int document_id, const string &document, DocumentStatus status,
@@ -132,18 +132,15 @@ public:
 
         if (document_id < 0)
         {
-            throw invalid_argument(""s);
+            throw invalid_argument("id меньше 0"s);
         }
-        if (count(document_id_.begin(), document_id_.end(), document_id) > 0)
+        if (document_id_.count(document_id) > 0)
         {
-            throw invalid_argument(""s);
+            throw invalid_argument("Документ с таким id уже существует"s);
         }
-        vector<string> words;
-        if (SplitIntoWordsNoStop(document, words) == false)
-        {
-            throw invalid_argument(""s);
-        }
-        document_id_.push_back(document_id);
+        vector<string> words = SplitIntoWordsNoStop(document);
+        document_id_[document_id] = index_;
+        ++index_;
         const double inv_word_count = 1.0 / words.size();
         for (const string &word : words)
         {
@@ -157,18 +154,14 @@ public:
                                       DocumentPredicate document_predicate) const
     {
         vector<Document> result;
-        Query query;
-        if (ParseQuery(raw_query, query) == false)
-        {
-            throw invalid_argument(""s);
-        }
+        Query query = ParseQuery(raw_query);
 
         result = FindAllDocuments(query, document_predicate);
 
         sort(result.begin(), result.end(),
              [](const Document &lhs, const Document &rhs)
              {
-                 if (abs(lhs.relevance - rhs.relevance) < 1e-6)
+                 if (abs(lhs.relevance - rhs.relevance) < EPSILON)
                  {
                      return lhs.rating > rhs.rating;
                  }
@@ -205,11 +198,7 @@ public:
                                                         int document_id) const
     {
         tuple<vector<string>, DocumentStatus> result;
-        Query query;
-        if (ParseQuery(raw_query, query) == false)
-        {
-            throw invalid_argument(""s);
-        }
+        Query query = ParseQuery(raw_query);
         vector<string> matched_words;
         for (const string &word : query.plus_words)
         {
@@ -247,7 +236,8 @@ private:
     const set<string> stop_words_;
     map<string, map<int, double>> word_to_document_freqs_;
     map<int, DocumentData> documents_;
-    vector<int> document_id_;
+    map<int, int> document_id_;
+    int index_;
 
     static bool IsValidWord(const string &word)
     {
@@ -261,31 +251,32 @@ private:
         return stop_words_.count(word) > 0;
     }
 
-    bool SplitIntoWordsNoStop(const string &text, vector<string> &words) const
+    vector<string> SplitIntoWordsNoStop(const string &text) const
     {
+        vector<string> words;
         for (const string &word : SplitIntoWords(text))
         {
             if (word.size() > 1)
             {
                 if ((word[0] == '-') && (word[1] == '-'))
                 {
-                    return false;
+                    throw invalid_argument("Слово содержит больше одного минуса"s);
                 }
             }
             if (word.back() == '-')
             {
-                return false;
+                throw invalid_argument("После минуса отсутствует минус слово"s);
             }
             if (IsValidWord(word) == false)
             {
-                return false;
+                throw invalid_argument("Слово содержит спец символ"s);
             }
             if (!IsStopWord(word))
             {
                 words.push_back(word);
             }
         }
-        return true;
+        return words;
     }
 
     static int ComputeAverageRating(const vector<int> &ratings)
@@ -313,6 +304,21 @@ private:
     {
         bool is_minus = false;
         // Word shouldn't be empty
+        if (text.size() > 1)
+        {
+            if ((text[0] == '-') && (text[1] == '-'))
+            {
+                throw invalid_argument("Слово содержит больше одного минуса"s);
+            }
+        }
+        if (text.back() == '-')
+        {
+            throw invalid_argument("После минуса отсутствует минус слово"s);
+        }
+        if (IsValidWord(text) == false)
+        {
+            throw invalid_argument("Слово содержит спец символ"s);
+        }
         if (text[0] == '-')
         {
             is_minus = true;
@@ -327,25 +333,12 @@ private:
         set<string> minus_words;
     };
 
-    bool ParseQuery(const string &text, Query &query) const
+    Query ParseQuery(const string &text) const
     {
+        Query query;
         for (const string &word : SplitIntoWords(text))
         {
-            if (word.size() > 1)
-            {
-                if ((word[0] == '-') && (word[1] == '-'))
-                {
-                    return false;
-                }
-            }
-            if (word.back() == '-')
-            {
-                return false;
-            }
-            if (IsValidWord(word) == false)
-            {
-                return false;
-            }
+
             const QueryWord query_word = ParseQueryWord(word);
             if (!query_word.is_stop)
             {
@@ -359,7 +352,7 @@ private:
                 }
             }
         }
-        return true;
+        return query;
     }
 
     // Existence required
