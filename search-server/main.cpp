@@ -101,7 +101,7 @@ public:
         : stop_words_(MakeUniqueNonEmptyStrings(stop_words))
     {
         if (!all_of(stop_words_.begin(), stop_words_.end(), [](const string &word)
-                   { return IsValidWord(word); }))
+                    { return IsValidWord(word); }))
         {
             throw invalid_argument("В слове присутствуют спец символы"s);
         }
@@ -122,7 +122,7 @@ public:
         int doc_size = document_id_.size();
         if ((index < 0) || (index >= doc_size))
         {
-            throw out_of_range("Введенный индекс некорректный");
+            throw out_of_range("Введеный индекс некорректный");
         }
         return doc_size - index + 1;
     }
