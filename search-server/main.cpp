@@ -100,14 +100,15 @@ public:
     explicit SearchServer(const StringContainer &stop_words)
         : stop_words_(MakeUniqueNonEmptyStrings(stop_words))
     {
-        if (all_of(stop_words_.begin(), stop_words_.end(), [](const string &word)
+        if (!all_of(stop_words_.begin(), stop_words_.end(), [](const string &word)
                    { return IsValidWord(word); }))
-        {
-        }
-        else
         {
             throw invalid_argument("В слове присутствуют спец символы"s);
         }
+        /*else
+        {
+            throw invalid_argument("В слове присутствуют спец символы"s);
+        }*/
     }
 
     explicit SearchServer(const string &stop_words_text)
@@ -118,12 +119,12 @@ public:
 
     int GetDocumentId(int index) const
     {
-        map<int, int> document_id;
-        for (const auto &elem : document_id_)
+        int doc_size = document_id_.size();
+        if ((index < 0) || (index >= doc_size))
         {
-            document_id.insert({elem.second, elem.first});
+            throw out_of_range("Введенный индекс некорректный");
         }
-        return document_id.at(index);
+        return doc_size - index + 1;
     }
 
     void AddDocument(int document_id, const string &document, DocumentStatus status,
@@ -139,8 +140,7 @@ public:
             throw invalid_argument("Документ с таким id уже существует"s);
         }
         vector<string> words = SplitIntoWordsNoStop(document);
-        document_id_[document_id] = index_;
-        ++index_;
+        document_id_.insert(document_id);
         const double inv_word_count = 1.0 / words.size();
         for (const string &word : words)
         {
@@ -236,8 +236,7 @@ private:
     const set<string> stop_words_;
     map<string, map<int, double>> word_to_document_freqs_;
     map<int, DocumentData> documents_;
-    map<int, int> document_id_;
-    int index_;
+    set<int> document_id_;
 
     static bool IsValidWord(const string &word)
     {
@@ -256,17 +255,6 @@ private:
         vector<string> words;
         for (const string &word : SplitIntoWords(text))
         {
-            if (word.size() > 1)
-            {
-                if ((word[0] == '-') && (word[1] == '-'))
-                {
-                    throw invalid_argument("Слово содержит больше одного минуса"s);
-                }
-            }
-            if (word.back() == '-')
-            {
-                throw invalid_argument("После минуса отсутствует минус слово"s);
-            }
             if (IsValidWord(word) == false)
             {
                 throw invalid_argument("Слово содержит спец символ"s);
