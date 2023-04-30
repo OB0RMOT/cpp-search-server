@@ -7,6 +7,7 @@
 #include <utility>
 #include <vector>
 #include <optional>
+#include <unordered_map>
 
 using namespace std;
 
@@ -119,12 +120,7 @@ public:
 
     int GetDocumentId(int index) const
     {
-        int doc_size = document_id_.size();
-        if ((index < 0) || (index >= doc_size))
-        {
-            throw out_of_range("Введеный индекс некорректный");
-        }
-        return doc_size - index + 1;
+        return index_id_.at(index);
     }
 
     void AddDocument(int document_id, const string &document, DocumentStatus status,
@@ -135,12 +131,15 @@ public:
         {
             throw invalid_argument("id меньше 0"s);
         }
-        if (document_id_.count(document_id) > 0)
+
+        if (id_index_.count(document_id) > 0)
         {
             throw invalid_argument("Документ с таким id уже существует"s);
         }
         vector<string> words = SplitIntoWordsNoStop(document);
-        document_id_.insert(document_id);
+        index_id_.insert({index_, document_id});
+        id_index_.insert({document_id, index_});
+        ++index_;
         const double inv_word_count = 1.0 / words.size();
         for (const string &word : words)
         {
@@ -236,7 +235,10 @@ private:
     const set<string> stop_words_;
     map<string, map<int, double>> word_to_document_freqs_;
     map<int, DocumentData> documents_;
-    set<int> document_id_;
+    // Использую map для логарифмического поиска id документа с помощью метода count()
+    unordered_map<int, int> index_id_; // map для получения id по index
+    unordered_map<int, int> id_index_; // map для проверки, существует ли документ с введенным id
+    int index_; // поле для хранения текущего индекса документа
 
     static bool IsValidWord(const string &word)
     {
