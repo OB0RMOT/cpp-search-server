@@ -132,7 +132,7 @@ public:
             throw invalid_argument("id меньше 0"s);
         }
         // В векторе нет метода count, приходится использовать функцию
-        if (count(document_id_.begin(), document_id_.end(), document_id) > 0)
+        if (documents_.count(document_id) > 0)
         {
             throw invalid_argument("Документ с таким id уже существует"s);
         }
