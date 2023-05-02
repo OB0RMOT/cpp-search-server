@@ -120,7 +120,7 @@ public:
 
     int GetDocumentId(int index) const
     {
-        return index_id_.at(index);
+        return document_id_.at(index);
     }
 
     void AddDocument(int document_id, const string &document, DocumentStatus status,
@@ -131,15 +131,13 @@ public:
         {
             throw invalid_argument("id меньше 0"s);
         }
-
-        if (id_index_.count(document_id) > 0)
+        // В векторе нет метода count, приходится использовать функцию
+        if (count(document_id_.begin(), document_id_.end(), document_id) > 0)
         {
             throw invalid_argument("Документ с таким id уже существует"s);
         }
+        document_id_.push_back(document_id);
         vector<string> words = SplitIntoWordsNoStop(document);
-        index_id_.insert({index_, document_id});
-        id_index_.insert({document_id, index_});
-        ++index_;
         const double inv_word_count = 1.0 / words.size();
         for (const string &word : words)
         {
@@ -235,10 +233,7 @@ private:
     const set<string> stop_words_;
     map<string, map<int, double>> word_to_document_freqs_;
     map<int, DocumentData> documents_;
-    // Использую map для логарифмического поиска id документа с помощью метода count()
-    unordered_map<int, int> index_id_; // map для получения id по index
-    unordered_map<int, int> id_index_; // map для проверки, существует ли документ с введенным id
-    int index_; // поле для хранения текущего индекса документа
+    vector<int> document_id_;
 
     static bool IsValidWord(const string &word)
     {
