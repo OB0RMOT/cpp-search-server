@@ -1,13 +1,12 @@
 #include "request_queue.h"
 
-// using namespace std::string_literals;
-
 using namespace std;
 
 std::ostream &operator<<(std::ostream &os, const Document &doc)
 {
     return os << "{ document_id = " << doc.id << ", relevance = " << doc.relevance << ", rating = " << doc.rating << " }";
 }
+
 int main()
 {
     SearchServer search_server("and in at"s);
@@ -29,5 +28,4 @@ int main()
     // первый запрос удален, 1437 запросов с нулевым результатом
     request_queue.AddFindRequest("sparrow"s);
     cout << "Total empty requests: "s << request_queue.GetNoResultRequests() << endl;
-    // system ("pause");
 }

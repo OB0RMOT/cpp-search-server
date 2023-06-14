@@ -9,7 +9,6 @@
 #include <utility>
 #include <vector>
 
-
 std::vector<std::string> SplitIntoWords(const std::string &text);
 
 template <typename StringContainer>
@@ -25,4 +24,3 @@ std::set<std::string> MakeUniqueNonEmptyStrings(const StringContainer &strings)
     }
     return non_empty_strings;
 }
-//#endif

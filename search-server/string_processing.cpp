@@ -1,6 +1,7 @@
-//Вставьте сюда своё решение из урока «Очередь запросов» темы «Стек, очередь, дек».‎
 #include "string_processing.h"
+
 using namespace std;
+
 vector<string> SplitIntoWords(const string &text)
 {
     vector<string> words;

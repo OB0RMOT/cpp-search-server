@@ -29,9 +29,8 @@ template <typename Iterator>
 class Paginator
 {
 public:
-    ///    typedef  vector<Document>::iterator  Iterator; template <typename Iterator >
     Paginator(Iterator begin, Iterator end, size_t page_size)
-    { //
+    { 
         for (Iterator it = begin; it != end;)
         {
             size_t tmp_size = distance(it, end);                      // остаток до конца
@@ -46,11 +45,8 @@ public:
     auto begin() const { return pages.begin(); }
     auto end() const { return pages.end(); }
     size_t size() { return pages.size(); }
-    // vector<IteratorRange> getPages() { return pages;         }
     
-
 private:
-    /// vector<IteratorRange> pages;///
     std::vector<IteratorRange<Iterator>> pages;
 };
 
