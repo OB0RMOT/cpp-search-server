@@ -6,52 +6,54 @@
 class RequestQueue
 {
 public:
-    explicit RequestQueue(const SearchServer &search_server) : server(search_server)
+    RequestQueue() = default;
+
+    explicit RequestQueue(const SearchServer& search_server) : server(search_server)
     {
     }
-    
-    // СЃРґРµР»Р°РµРј "РѕР±С‘СЂС‚РєРё" РґР»СЏ РІСЃРµС… РјРµС‚РѕРґРѕРІ РїРѕРёСЃРєР°, С‡С‚РѕР±С‹ СЃРѕС…СЂР°РЅСЏС‚СЊ СЂРµР·СѓР»СЊС‚Р°С‚С‹ РґР»СЏ РЅР°С€РµР№ СЃС‚Р°С‚РёСЃС‚РёРєРё
-    template <typename DocumentPredicate>
-    std::vector<Document> AddFindRequest(const std::string &raw_query, DocumentPredicate document_predicate);
 
-    std::vector<Document> AddFindRequest(const std::string &raw_query, DocumentStatus status);
-    
-    std::vector<Document> AddFindRequest(const std::string &raw_query);
-    
+    // сделаем "обёртки" для всех методов поиска, чтобы сохранять результаты для нашей статистики
+    template <typename DocumentPredicate>
+    std::vector<Document> AddFindRequest(const std::string& raw_query, DocumentPredicate document_predicate);
+
+    std::vector<Document> AddFindRequest(const std::string& raw_query, DocumentStatus status);
+
+    std::vector<Document> AddFindRequest(const std::string& raw_query);
+
     int GetNoResultRequests() const;
 
 private:
     struct QueryResult
     {
-        std::vector<Document> result;
+        std::vector<Document> result = {};
     };
     const SearchServer& server;
-    std::deque<QueryResult> requests_;
+    std::deque<QueryResult> requests_ {};
     const static int min_in_day_ = 1440;
-    uint64_t min_count;
-    int empty_result_count;
+    uint64_t min_count = 0;
+    int empty_result_count = 0;
 };
 
 template <typename DocumentPredicate>
-std::vector<Document> RequestQueue::AddFindRequest(const std::string &raw_query, DocumentPredicate document_predicate) // Р’ РјРѕРјРµРЅС‚ РїРѕСЏРІР»РµРЅРёСЏ РЅРѕРІРѕРіРѕ Р·Р°РїСЂРѕСЃР°:
+std::vector<Document> RequestQueue::AddFindRequest(const std::string& raw_query, DocumentPredicate document_predicate) // В момент появления нового запроса:
 {
     while (min_count >= min_in_day_)
     {
         if (requests_.front().result.empty())
         {
-            --empty_result_count; // РќРµ Р·Р°Р±СѓРґСЊС‚Рµ РІРѕ РІСЂРµРјСЏ СѓРґР°Р»РµРЅРёСЏ СѓРјРµРЅСЊС€РёС‚СЊ РєРѕР»РёС‡РµСЃС‚РІРѕ Р·Р°РїСЂРѕСЃРѕРІ СЃ РїСѓСЃС‚С‹Рј РІРµРєС‚РѕСЂРѕРј РѕС‚РІРµС‚РѕРІ, РµСЃР»Рё РЅСѓР¶РЅРѕ;
+            --empty_result_count; // Не забудьте во время удаления уменьшить количество запросов с пустым вектором ответов, если нужно;
         }
-        requests_.pop_front();    // РЈРґР°Р»РёС‚Рµ РёР· РґРµРєР° РІСЃРµ Р·Р°РїСЂРѕСЃС‹, РєРѕС‚РѕСЂС‹Рµ СѓСЃРїРµР»Рё СѓСЃС‚Р°СЂРµС‚СЊ;
+        requests_.pop_front();    // Удалите из дека все запросы, которые успели устареть;
         --min_count;
     }
     QueryResult query_result;
     query_result.result = server.FindTopDocuments(raw_query, document_predicate);
     if (query_result.result.empty())
     {
-        ++empty_result_count;     // Р”РѕР±Р°РІСЊС‚Рµ РЅРѕРІС‹Р№ Р·Р°РїСЂРѕСЃ РІ РґРµРє Рё РѕР±РЅРѕРІРёС‚Рµ РєРѕР»РёС‡РµСЃС‚РІРѕ Р·Р°РїСЂРѕСЃРѕРІ Р±РµР· СЂРµР·СѓР»СЊС‚Р°С‚РѕРІ РїРѕРёСЃРєР°.
+        ++empty_result_count;     // Добавьте новый запрос в дек и обновите количество запросов без результатов поиска.
     }
     requests_.push_back(query_result);
-    ++min_count;                  // РЈРІРµР»РёС‡СЊС‚Рµ РІСЂРµРјСЏ РЅР° РѕРґРЅСѓ РјРёРЅСѓС‚Сѓ (Р·Р°РїСЂРѕСЃС‹ РїСЂРёС…РѕРґСЏС‚ СЂР°Р· РІ РјРёРЅСѓС‚Сѓ);
+    ++min_count;                  // Увеличьте время на одну минуту (запросы приходят раз в минуту);
 
     return query_result.result;
 }

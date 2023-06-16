@@ -1,4 +1,5 @@
 #pragma once
+#pragma once
 #include <algorithm>
 #include <cmath>
 #include <iostream>
@@ -9,13 +10,13 @@
 #include <utility>
 #include <vector>
 
-std::vector<std::string> SplitIntoWords(const std::string &text);
+std::vector<std::string> SplitIntoWords(const std::string& text);
 
 template <typename StringContainer>
-std::set<std::string> MakeUniqueNonEmptyStrings(const StringContainer &strings)
+std::set<std::string> MakeUniqueNonEmptyStrings(const StringContainer& strings)
 {
     std::set<std::string> non_empty_strings;
-    for (const std::string &str : strings)
+    for (const std::string& str : strings)
     {
         if (!str.empty())
         {

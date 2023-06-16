@@ -1,8 +1,9 @@
+// в качестве заготовки кода используйте последнюю версию своей поисковой системы
 #include "string_processing.h"
 
 using namespace std;
 
-vector<string> SplitIntoWords(const string &text)
+vector<string> SplitIntoWords(const string& text)
 {
     vector<string> words;
     string word;
@@ -25,6 +26,5 @@ vector<string> SplitIntoWords(const string &text)
     {
         words.push_back(word);
     }
-
     return words;
 }

@@ -1,4 +1,6 @@
 #pragma once
+#include <set>
+#include <string>
 
 enum class DocumentStatus
 {
