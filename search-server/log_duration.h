@@ -8,17 +8,26 @@
 #define UNIQUE_VAR_NAME_PROFILE PROFILE_CONCAT(profileGuard, __LINE__)
 #define LOG_DURATION(x) LogDuration UNIQUE_VAR_NAME_PROFILE(x)
 
-class LogDuration {
+class LogDuration
+{
 public:
-    // заменим имя типа std::chrono::steady_clock
-    // с помощью using для удобства
+    // Р·Р°РјРµРЅРёРј РёРјСЏ С‚РёРїР° std::chrono::steady_clock
+    // СЃ РїРѕРјРѕС‰СЊСЋ using РґР»СЏ СѓРґРѕР±СЃС‚РІР°
     using Clock = std::chrono::steady_clock;
 
-    LogDuration(const std::string& id)
-        : id_(id) {
+    LogDuration(const std::string &id, std::ostream &out = std::cerr)
+        : id_(id),
+          out_(out)
+    {
+        using namespace std::literals;
+        if (&out_ == &std::cout)
+        {
+            id_ = "Operation time"s;
+        }
     }
 
-    ~LogDuration() {
+    ~LogDuration()
+    {
         using namespace std::chrono;
         using namespace std::literals;
 
@@ -28,6 +37,7 @@ public:
     }
 
 private:
-    const std::string id_;
+    std::string id_;
     const Clock::time_point start_time_ = Clock::now();
+    std::ostream &out_ = std::cerr;
 };

@@ -2,22 +2,22 @@
 
 using namespace std;
 
-vector<int>::iterator SearchServer::begin()
+set<int>::iterator SearchServer::begin()
 {
     return document_ids_.begin();
 }
 
-vector<int>::const_iterator SearchServer::begin() const
+set<int>::const_iterator SearchServer::begin() const
 {
     return document_ids_.begin();
 }
 
-vector<int>::iterator SearchServer::end()
+set<int>::iterator SearchServer::end()
 {
     return document_ids_.end();
 }
 
-vector<int>::const_iterator SearchServer::end() const
+set<int>::const_iterator SearchServer::end() const
 {
     return document_ids_.end();
 }
@@ -34,19 +34,13 @@ const map<string, double>& SearchServer::GetWordFrequencies(int document_id) con
 
 void SearchServer::RemoveDocument(int document_id)
 {
-    if (documents_.count(document_id) > 0)
+    for (auto [word, freq] : document_to_word_freqs_.at(document_id))
     {
-        documents_.erase(document_id);
-
-        for (auto& word_freqs : word_to_document_freqs_)
-        {
-            word_freqs.second.erase(document_id);
-        }
-
-        document_to_word_freqs_.erase(document_id);
-
-        document_ids_.erase(std::remove(document_ids_.begin(), document_ids_.end(), document_id), document_ids_.end());
-    }
+        word_to_document_freqs_.at(word).erase(document_id);
+    }                                           
+    document_to_word_freqs_.erase(document_id); 
+    document_ids_.erase(document_id);           
+    documents_.erase(document_id);              
 }
 
 SearchServer::SearchServer(const string& stop_words_text)
@@ -69,7 +63,7 @@ void SearchServer::AddDocument(int document_id, const string& document, Document
         document_to_word_freqs_[document_id][word] += inv_word_count;
     }
     documents_.emplace(document_id, DocumentData{ ComputeAverageRating(ratings), status});
-    document_ids_.push_back(document_id);
+    document_ids_.insert(document_id);
 }
 
 vector<Document> SearchServer::FindTopDocuments(const string& raw_query, DocumentStatus status) const
