@@ -1,16 +1,16 @@
-#pragma once
-#include <algorithm>
-#include <cmath>
-#include <iostream>
-#include <map>
-#include <set>
-#include <stdexcept>
-#include <string_view>
-#include <string>
-#include <utility>
-#include <vector>
+#pragma once 
+#include <algorithm> 
+#include <cmath> 
+#include <iostream> 
+#include <map> 
+#include <set> 
+#include <stdexcept> 
+#include <string_view> 
+#include <string> 
+#include <utility> 
+#include <vector> 
 
-#include "document.h"
+#include "document.h" 
 
 template <typename Iterator>
 class IteratorRange
@@ -33,11 +33,11 @@ public:
     {
         for (Iterator it = begin; it != end;)
         {
-            size_t tmp_size = distance(it, end);                      // остаток до конца
-            size_t current_page_size = std::min(page_size, tmp_size); // минимальный размер страницы (меньшее из остатка или размера страницы)
-            Iterator old_it = it;                                     // сохранить копию итератора на начало страницы
-            advance(it, current_page_size);                           // передвигаем итератор на следующую страницу
-            IteratorRange current_page = IteratorRange(old_it, it);   // создание current_page - экз-ра класса IteratorRange
+            size_t tmp_size = distance(it, end);                      // РѕСЃС‚Р°С‚РѕРє РґРѕ РєРѕРЅС†Р° 
+            size_t current_page_size = std::min(page_size, tmp_size); // РјРёРЅРёРјР°Р»СЊРЅС‹Р№ СЂР°Р·РјРµСЂ СЃС‚СЂР°РЅРёС†С‹ (РјРµРЅСЊС€РµРµ РёР· РѕСЃС‚Р°С‚РєР° РёР»Рё СЂР°Р·РјРµСЂР° СЃС‚СЂР°РЅРёС†С‹) 
+            Iterator old_it = it;                                     // СЃРѕС…СЂР°РЅРёС‚СЊ РєРѕРїРёСЋ РёС‚РµСЂР°С‚РѕСЂР° РЅР° РЅР°С‡Р°Р»Рѕ СЃС‚СЂР°РЅРёС†С‹ 
+            advance(it, current_page_size);                           // РїРµСЂРµРґРІРёРіР°РµРј РёС‚РµСЂР°С‚РѕСЂ РЅР° СЃР»РµРґСѓСЋС‰СѓСЋ СЃС‚СЂР°РЅРёС†Сѓ 
+            IteratorRange current_page = IteratorRange(old_it, it);   // СЃРѕР·РґР°РЅРёРµ current_page - СЌРєР·-СЂР° РєР»Р°СЃСЃР° IteratorRange 
             pages.push_back(current_page);
             it = current_page.end();
         }

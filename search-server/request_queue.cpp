@@ -1,5 +1,5 @@
-#include "request_queue.h"
-
+#include "request_queue.h" 
+#include "document.h"
 using namespace std;
 
 vector<Document> RequestQueue::AddFindRequest(const string& raw_query, DocumentStatus status)
@@ -8,19 +8,19 @@ vector<Document> RequestQueue::AddFindRequest(const string& raw_query, DocumentS
     {
         if (requests_.front().result.empty())
         {
-            --empty_result_count;    // Не забудьте во время удаления уменьшить количество запросов с пустым вектором ответов, если нужно;
+            --empty_result_count;    // РќРµ Р·Р°Р±СѓРґСЊС‚Рµ РІРѕ РІСЂРµРјСЏ СѓРґР°Р»РµРЅРёСЏ СѓРјРµРЅСЊС€РёС‚СЊ РєРѕР»РёС‡РµСЃС‚РІРѕ Р·Р°РїСЂРѕСЃРѕРІ СЃ РїСѓСЃС‚С‹Рј РІРµРєС‚РѕСЂРѕРј РѕС‚РІРµС‚РѕРІ, РµСЃР»Рё РЅСѓР¶РЅРѕ; 
         }
-        requests_.pop_front();       // Удалите из дека все запросы, которые успели устареть;
+        requests_.pop_front();       // РЈРґР°Р»РёС‚Рµ РёР· РґРµРєР° РІСЃРµ Р·Р°РїСЂРѕСЃС‹, РєРѕС‚РѕСЂС‹Рµ СѓСЃРїРµР»Рё СѓСЃС‚Р°СЂРµС‚СЊ; 
         --min_count;
     }
     QueryResult query_result;
     query_result.result = server.FindTopDocuments(raw_query, status);
     if (query_result.result.empty())
     {
-        ++empty_result_count;        // Добавьте новый запрос в дек и обновите количество запросов без результатов поиска.
+        ++empty_result_count;        // Р”РѕР±Р°РІСЊС‚Рµ РЅРѕРІС‹Р№ Р·Р°РїСЂРѕСЃ РІ РґРµРє Рё РѕР±РЅРѕРІРёС‚Рµ РєРѕР»РёС‡РµСЃС‚РІРѕ Р·Р°РїСЂРѕСЃРѕРІ Р±РµР· СЂРµР·СѓР»СЊС‚Р°С‚РѕРІ РїРѕРёСЃРєР°. 
     }
     requests_.push_back(query_result);
-    ++min_count;                     // Увеличьте время на одну минуту (запросы приходят раз в минуту);
+    ++min_count;                     // РЈРІРµР»РёС‡СЊС‚Рµ РІСЂРµРјСЏ РЅР° РѕРґРЅСѓ РјРёРЅСѓС‚Сѓ (Р·Р°РїСЂРѕСЃС‹ РїСЂРёС…РѕРґСЏС‚ СЂР°Р· РІ РјРёРЅСѓС‚Сѓ); 
 
     return query_result.result;
 }
@@ -31,19 +31,19 @@ vector<Document> RequestQueue::AddFindRequest(const string& raw_query)
     {
         if (requests_.front().result.empty())
         {
-            --empty_result_count;    // Не забудьте во время удаления уменьшить количество запросов с пустым вектором ответов, если нужно;
+            --empty_result_count;    // РќРµ Р·Р°Р±СѓРґСЊС‚Рµ РІРѕ РІСЂРµРјСЏ СѓРґР°Р»РµРЅРёСЏ СѓРјРµРЅСЊС€РёС‚СЊ РєРѕР»РёС‡РµСЃС‚РІРѕ Р·Р°РїСЂРѕСЃРѕРІ СЃ РїСѓСЃС‚С‹Рј РІРµРєС‚РѕСЂРѕРј РѕС‚РІРµС‚РѕРІ, РµСЃР»Рё РЅСѓР¶РЅРѕ; 
         }
-        requests_.pop_front();       // Удалите из дека все запросы, которые успели устареть;
+        requests_.pop_front();       // РЈРґР°Р»РёС‚Рµ РёР· РґРµРєР° РІСЃРµ Р·Р°РїСЂРѕСЃС‹, РєРѕС‚РѕСЂС‹Рµ СѓСЃРїРµР»Рё СѓСЃС‚Р°СЂРµС‚СЊ; 
         --min_count;
     }
     QueryResult query_result;
     query_result.result = server.FindTopDocuments(raw_query);
     if (query_result.result.empty())
     {
-        ++empty_result_count;        // Добавьте новый запрос в дек и обновите количество запросов без результатов поиска.
+        ++empty_result_count;        // Р”РѕР±Р°РІСЊС‚Рµ РЅРѕРІС‹Р№ Р·Р°РїСЂРѕСЃ РІ РґРµРє Рё РѕР±РЅРѕРІРёС‚Рµ РєРѕР»РёС‡РµСЃС‚РІРѕ Р·Р°РїСЂРѕСЃРѕРІ Р±РµР· СЂРµР·СѓР»СЊС‚Р°С‚РѕРІ РїРѕРёСЃРєР°. 
     }
     requests_.push_back(query_result);
-    ++min_count;                     // Увеличьте время на одну минуту (запросы приходят раз в минуту);
+    ++min_count;                     // РЈРІРµР»РёС‡СЊС‚Рµ РІСЂРµРјСЏ РЅР° РѕРґРЅСѓ РјРёРЅСѓС‚Сѓ (Р·Р°РїСЂРѕСЃС‹ РїСЂРёС…РѕРґСЏС‚ СЂР°Р· РІ РјРёРЅСѓС‚Сѓ); 
 
     return query_result.result;
 }
